@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"launchpad.net/~niemeyer/goyaml/beta"
+	goyaml "gopkg.in/yaml.v2"
 )
 
 // Config ---------------------------------------------------------------------
