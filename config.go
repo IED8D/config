@@ -213,16 +213,16 @@ func Set(cfg *interface{}, path string, value interface{}) (removed interface{},
 			if *cfg != nil {
 				switch v := (*cfg).(type) {
 				case []interface{}:
-					if i,err:=strconv.Atoi(part); err==nil {
-						if  i> -1 && i < len(v) {
-							modified=cfg
-							v[i]=value
-						}else {
-							return nil,nil,nil, fmt.Errorf("unable to set array item . Item out of bound %s",path)
+					if i, err := strconv.Atoi(part); err == nil {
+						if i > -1 && i < len(v) {
+							modified = cfg
+							v[i] = value
+						} else {
+							return nil, nil, nil, fmt.Errorf("unable to set array item . Item out of bound %s", path)
 						}
 					}
 				}
-				
+
 				modified = *cfg // todo check if we
 			}
 			*cfg = value
@@ -239,27 +239,28 @@ func Set(cfg *interface{}, path string, value interface{}) (removed interface{},
 				//if expecting map and map continue
 				// if expecting slice and slice continue
 				// else we
-				case map[string]interface{} ,[]interface{}:
+				case map[string]interface{}, []interface{}:
 					if _, err = strconv.Atoi(child); err == nil {
 						cfg = &ancestor
 						continue
 					}
-				removed = *cfg
+					removed = *cfg
+				}
+
+				// parent does not exist need to be created
+				//  here we need to decide whether object or array must be created
+				if _, err = strconv.Atoi(child); err == nil {
+					ancestor = make([]interface{}, 0)
+				} else {
+					ancestor = make(map[string]interface{})
+				}
+				if added == nil {
+					added = ancestor
+				}
+				cfg = &ancestor
 			}
 
-			// parent does not exist need to be created
-			//  here we need to decide whether object or array must be created
-			if _, err = strconv.Atoi(child); err == nil {
-				ancestor = make([]interface{}, 0)
-			} else {
-				ancestor = make(map[string]interface{})
-			}
-			if added == nil {
-				added = ancestor
-			}
-			cfg = &ancestor
 		}
-
 	}
 	return cfg, removed, modified, err
 }
