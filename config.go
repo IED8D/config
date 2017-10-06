@@ -202,7 +202,7 @@ func Set(cfg *interface{}, path string, value interface{}) (removed interface{},
 			} else {
 				return nil, nil, nil, fmt.Errorf(
 					"Index out of range at %q: list has only %v items",
-					strings.Join(parts[:pos+1], "."), len(v))
+					strings.Join(parts[:k+1], "."), len(v))
 			}
 		}
 	}
