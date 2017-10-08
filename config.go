@@ -47,10 +47,27 @@ func (cfg *Config) Set(path string, value interface{}) (modified map[string]inte
 
 	l := len(keys)
 	ref := &(cfg.Root)
+
 	for i, key := range keys {
 		switch v := (*ref).(type) {
 		case map[string]interface{}:
 			if obj, ok := v[key]; ok {
+				switch arr:=obj.(type) {
+				case []interface{}:
+					//lets try to see if don't need to resize it
+					if i < l-1 { //alreadsy last element
+						if arrIndex, err := strconv.Atoi(keys[i+1]); err == nil {
+							if arrIndex >= len(arr) {
+								t := make([]interface{}, arrIndex+1)
+								copy(t, arr)
+								arr=t
+								obj = toInterface(arr)
+								v[key] = obj
+							}
+						}
+					}
+					// TODO how come its array but next element is not arr item
+				}
 				ref = &obj
 				continue
 			} else {
@@ -61,6 +78,7 @@ func (cfg *Config) Set(path string, value interface{}) (modified map[string]inte
 					child := makeMap(keys[i+1])
 					ref = &child
 					v[key] = child
+
 					continue
 				}
 			}
@@ -68,10 +86,7 @@ func (cfg *Config) Set(path string, value interface{}) (modified map[string]inte
 			if arrIndex, err := strconv.Atoi(key); err == nil {
 				if arrIndex > -1  {
 					if arrIndex >= len(v) {
-						t := make([]interface{}, arrIndex+1, arrIndex+1)
-						copy(t, v)
-						v = t
-						*ref=v
+						return nil,nil, fmt.Errorf("index out of bounds %s",strings.Join(keys[:i+1],"."))
 					}
 					if i == l-1 {
 						v[arrIndex] = value

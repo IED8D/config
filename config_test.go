@@ -335,7 +335,10 @@ func TestSetConfig(t *testing.T) {
 	cfg := &Config{}
 	for _, v := range configTests {
 		if v.ok {
-			cfg.Set(v.path, v.want)
+			_,_,err:=cfg.Set(v.path, v.want)
+			if err != nil {
+				t.Fatal(err)
+			}
 		}
 
 	}
