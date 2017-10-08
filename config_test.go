@@ -373,7 +373,14 @@ var setTests = []struct {
 	{"config.array2", "List", []interface{}{"www.google.com", "www.cnn.com", "www.example.com"}, true},
 	//
 	{"config.array", "List", []interface{}{"www.google.com", []interface{}{"www.cnn.com", "www.example.com"}, "www.example.com"}, true},
-}
+
+	{"config.admin", "Map", map[string]interface{}{"username": "calvin", "password": "yukon"}, true},
+	{"config.admin2", "Map", map[string]interface{}{"username": "hobbes", "password": "tuna"}, true},
+
+
+	{"config.admin2.username", "String", "swordfish", true},
+
+	}
 
 
 
