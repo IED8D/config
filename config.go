@@ -32,12 +32,8 @@ func (cfg *Config) Get(path string) (*Config, error) {
 
 // Set the value in the structure according to a dotted path.
 // objects that do not exists will be created
-func (cfg *Config) Set(path string, value interface{}) error {
-	n, err := Get(cfg.Root, path)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	return nil
+func (cfg *Config) Set(path string, value interface{}) (removed interface{}, modified interface{}, added interface{}, err error) {
+	return Set(&(cfg.Root), path, value)
 }
 
 // Bool returns a bool according to a dotted path.

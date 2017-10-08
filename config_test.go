@@ -326,6 +326,6 @@ func equalMap(m1, m2 interface{}) bool {
 	return true
 }
 
-func Test_Config_Set(t *testing.T) {
-	t.Error("todo")
-}
+// func Test_Config_Set(t *testing.T) {
+// 	t.Error("todo")
+// }
