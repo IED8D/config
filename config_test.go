@@ -402,13 +402,13 @@ func TestSetConfig(t *testing.T) {
 	}
 	for _, v := range setTests {
 		if v.ok {
-			_,_,_,err:=cfg.Set(v.path, v.want)
+			_,_,err:=cfg.Set(v.path, v.want)
 			if err != nil {
 				t.Fatal(err)
 			}
 		}
 		if ! v.ok {
-			_,_,_,err:=cfg.Set(v.path, v.want)
+			_,_,err:=cfg.Set(v.path, v.want)
 			if err == nil {
 				t.Fatal("err should be returned")
 			}

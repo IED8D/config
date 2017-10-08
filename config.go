@@ -33,10 +33,10 @@ func (cfg *Config) Get(path string) (*Config, error) {
 
 // Set the value in the structure according to a dotted path.
 // objects that do not exists will be created
-func (cfg *Config) Set(path string, value interface{}) (removed map[string]interface{},modified map[string]interface{}, added map[string]interface{}, err error) {
+func (cfg *Config) Set(path string, value interface{}) (modified map[string]interface{}, added map[string]interface{}, err error) {
 	path= strings.Trim(path,".")
 	path= strings.Trim(path," ")
-	removed = make(map[string]interface{})
+
 	modified = make(map[string]interface{})
 	added = make(map[string]interface{})
 	if cfg.Root == nil {
@@ -44,6 +44,7 @@ func (cfg *Config) Set(path string, value interface{}) (removed map[string]inter
 	}
 	if path == "" {
 		cfg.Root = value
+		added[""]=value
 		return
 	}
 
@@ -52,7 +53,7 @@ func (cfg *Config) Set(path string, value interface{}) (removed map[string]inter
 	case map[string]interface{}: // this is ok
 	default:
 		// not ok
-		removed[""]=cfg.Root
+		modified[""]=cfg.Root
 		cfg.Root = make(map[string]interface{})
 	}
 
@@ -66,6 +67,7 @@ func (cfg *Config) Set(path string, value interface{}) (removed map[string]inter
 		case map[string]interface{}:
 			if obj, ok := v[key]; ok {
 				if i == l-1 {
+					modified[strings.Join(keys[:i], ".")]=obj
 					v[key] = value
 					return
 				}else {
@@ -74,11 +76,12 @@ func (cfg *Config) Set(path string, value interface{}) (removed map[string]inter
 				}
 			} else {
 				if i == l-1 {
+					added[strings.Join(keys[:i], ".")]=obj
 					v[key] = value
 					return
 				} else {
 					if _, err := strconv.Atoi(keys[i+1]); err == nil{
-						return nil,nil,nil, fmt.Errorf(
+						return nil,nil, fmt.Errorf(
 							"dynamic array elements generation is not supported. creat array and assign to %s",
 								strings.Join(keys[:i+1], "."))
 					}
@@ -91,18 +94,18 @@ func (cfg *Config) Set(path string, value interface{}) (removed map[string]inter
 		case []interface{}:
 			if arrIndex, err := strconv.Atoi(key); err == nil {
 				if arrIndex > -1 && arrIndex< len(v) {
-
 						if i == l-1 {
+							modified[strings.Join(keys[:i], ".")]=v[arrIndex]
 							v[arrIndex] = value
-							return removed, modified, added, nil
+							return  modified, added, nil
 						} else {
 							ref = &(v[arrIndex])
 							continue
 						}
 				}
-				return nil,nil,nil, fmt.Errorf("index out of bounds. %s %s", strings.Join(keys[:i+1], "."), err)
+				return nil,nil, fmt.Errorf("index out of bounds. %s %s", strings.Join(keys[:i+1], "."), err)
 			}
-			return nil,nil, nil, fmt.Errorf("object is array. index missmatch %s %s", strings.Join(keys[:i+1], "."), err)
+			return nil, nil, fmt.Errorf("object is array. index missmatch %s %s", strings.Join(keys[:i+1], "."), err)
 		}
 	}
 	return
