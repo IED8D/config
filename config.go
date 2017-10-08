@@ -33,14 +33,27 @@ func (cfg *Config) Get(path string) (*Config, error) {
 
 // Set the value in the structure according to a dotted path.
 // objects that do not exists will be created
-func (cfg *Config) Set(path string, value interface{}) (modified map[string]interface{}, added map[string]interface{}, err error) {
-
+func (cfg *Config) Set(path string, value interface{}) (removed map[string]interface{},modified map[string]interface{}, added map[string]interface{}, err error) {
+	path= strings.Trim(path,".")
+	path= strings.Trim(path," ")
+	removed = make(map[string]interface{})
+	modified = make(map[string]interface{})
+	added = make(map[string]interface{})
 	if cfg.Root == nil {
 		cfg.Root = make(map[string]interface{})
 	}
 	if path == "" {
 		cfg.Root = value
 		return
+	}
+
+	switch cfg.Root.(type){
+
+	case map[string]interface{}: // this is ok
+	default:
+		// not ok
+		removed[""]=cfg.Root
+		cfg.Root = make(map[string]interface{})
 	}
 
 	keys := strings.Split(path, ".")
@@ -65,11 +78,11 @@ func (cfg *Config) Set(path string, value interface{}) (modified map[string]inte
 					return
 				} else {
 					if _, err := strconv.Atoi(keys[i+1]); err == nil{
-						return nil,nil, fmt.Errorf(
+						return nil,nil,nil, fmt.Errorf(
 							"dynamic array elements generation is not supported. creat array and assign to %s",
 								strings.Join(keys[:i+1], "."))
 					}
-					child := makeMap(keys[i+1])
+					child := makeMap()
 					ref = &child
 					v[key] = child
 					continue
@@ -81,15 +94,15 @@ func (cfg *Config) Set(path string, value interface{}) (modified map[string]inte
 
 						if i == l-1 {
 							v[arrIndex] = value
-							return modified, added, nil
+							return removed, modified, added, nil
 						} else {
 							ref = &(v[arrIndex])
 							continue
 						}
 				}
-				return nil,nil, fmt.Errorf("index out of bounds. %s %s", strings.Join(keys[:i+1], "."), err)
+				return nil,nil,nil, fmt.Errorf("index out of bounds. %s %s", strings.Join(keys[:i+1], "."), err)
 			}
-			return nil, nil, fmt.Errorf("object is array. index missmatch %s %s", strings.Join(keys[:i+1], "."), err)
+			return nil,nil, nil, fmt.Errorf("object is array. index missmatch %s %s", strings.Join(keys[:i+1], "."), err)
 		}
 	}
 	return
@@ -101,7 +114,7 @@ func toInterface(arr []interface{}) interface{}{
 
 
 
-func makeMap(next string) interface{} {
+func makeMap() interface{} {
 	return make(map[string]interface{})
 }
 

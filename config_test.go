@@ -341,7 +341,7 @@ var setTests = []struct {
 	want interface{}
 	ok   bool
 }{
-	// ok
+
 	{"map.key0", "Bool", true, true},
 	{"map.key0", "String", "true", true},
 
@@ -386,17 +386,31 @@ var setTests = []struct {
 
 func TestSetConfig(t *testing.T) {
 	cfg := &Config{}
+	cfg.Set("","some")
+	if str,err:=cfg.String(""); str!="some" || err !=nil{
+		t.Errorf("root should be string")
+	}
+	cfg.Set("",[]interface{}{"alll"})
+	if lst,err:=cfg.List(""); len (lst)!=1 || err !=nil{
+		t.Errorf("root should be string")
+	}
+
+	cfg.Set("",map[string]interface{}{"ll":"some_key"})
+
+	if lst,err:=cfg.Map(""); len (lst)!=1 || err !=nil{
+		t.Errorf("root should be string")
+	}
 	for _, v := range setTests {
 		if v.ok {
-			_,_,err:=cfg.Set(v.path, v.want)
+			_,_,_,err:=cfg.Set(v.path, v.want)
 			if err != nil {
 				t.Fatal(err)
 			}
 		}
 		if ! v.ok {
-			_,_,err:=cfg.Set(v.path, v.want)
+			_,_,_,err:=cfg.Set(v.path, v.want)
 			if err == nil {
-				t.Fatal(err)
+				t.Fatal("err should be returned")
 			}
 		}
 	}
@@ -411,6 +425,9 @@ func TestSetConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 	testSetConfig(t, cfg)
+
+
+
 }
 func testSetConfig(t *testing.T, cfg *Config) {
 Loop:
