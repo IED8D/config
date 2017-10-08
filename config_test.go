@@ -5,7 +5,9 @@
 package config
 
 import (
+
 	"testing"
+	"fmt"
 )
 
 var yamlString = `
@@ -59,6 +61,7 @@ var configTests = []struct {
 	// ok
 	{"map.key0", "Bool", true, true},
 	{"map.key0", "String", "true", true},
+	//{"map.key32323.aassss.ssss", "String", "true", true},
 	// bad
 	{"map.key0.foo", "Bool", "", false},
 	{"map.key0", "Float64", "", false},
@@ -118,6 +121,7 @@ var configTests = []struct {
 	{"map.key9", "String", "", false},
 
 	// ok
+	//{"list", "List", make([]interface{},10), true},
 	{"list.0", "Bool", true, true},
 	{"list.0", "String", "true", true},
 	// bad
@@ -326,6 +330,24 @@ func equalMap(m1, m2 interface{}) bool {
 	return true
 }
 
-// func Test_Config_Set(t *testing.T) {
-// 	t.Error("todo")
-// }
+func TestSetConfig(t *testing.T) {
+	//cfg, err := ParseYaml(yamlString)
+	cfg := &Config{}
+	for _, v := range configTests {
+		if v.ok {
+			cfg.Set(v.path, v.want)
+		}
+
+	}
+	str, err := RenderYaml(cfg.Root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Printf("%s",str)
+
+	cfg, err = ParseYaml(str)
+	if err != nil {
+		t.Fatal(err)
+	}
+	testConfig(t, cfg)
+}

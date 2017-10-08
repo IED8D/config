@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	goyaml "gopkg.in/yaml.v2"
+
 )
 
 // Config ---------------------------------------------------------------------
@@ -32,8 +33,77 @@ func (cfg *Config) Get(path string) (*Config, error) {
 
 // Set the value in the structure according to a dotted path.
 // objects that do not exists will be created
-func (cfg *Config) Set(path string, value interface{}) (removed interface{}, modified interface{}, added interface{}, err error) {
-	return Set(&(cfg.Root), path, value)
+func (cfg *Config) Set(path string, value interface{}) (modified map[string]interface{}, added map[string]interface{}, err error) {
+
+	if cfg.Root == nil {
+		cfg.Root = make(map[string]interface{})
+	}
+	if path == "" {
+		cfg.Root = value
+		return
+	}
+
+	keys := strings.Split(path, ".")
+
+	l := len(keys)
+	ref := &(cfg.Root)
+	for i, key := range keys {
+		switch v := (*ref).(type) {
+		case map[string]interface{}:
+			if obj, ok := v[key]; ok {
+				ref = &obj
+				continue
+			} else {
+				if i == l-1 {
+					v[key] = value
+					return
+				} else {
+					child := makeMap(keys[i+1])
+					ref = &child
+					v[key] = child
+					continue
+				}
+			}
+		case []interface{}:
+			if arrIndex, err := strconv.Atoi(key); err == nil {
+				if arrIndex > -1  {
+					if arrIndex >= len(v) {
+						t := make([]interface{}, arrIndex+1, arrIndex+1)
+						copy(t, v)
+						v = t
+						*ref=v
+					}
+					if i == l-1 {
+						v[arrIndex] = value
+						return modified, added, nil
+					} else {
+						child := makeMap(keys[i+1])
+						ref = &child
+						v[arrIndex] = child
+						continue
+					}
+				} else {
+					return nil, nil, fmt.Errorf("object is array. index out of bounds %s %s", strings.Join(keys[:i+1], "."), err)
+
+				}
+			}
+			return nil, nil, fmt.Errorf("object is array. index missmatch %s %s", strings.Join(keys[:i+1], "."), err)
+
+		}
+	}
+
+	return
+}
+
+func toInterface(arr []interface{}) interface{}{
+	return arr
+}
+
+func makeMap(next string) interface{} {
+	if i, err := strconv.Atoi(next); err == nil {
+		return make([]interface{}, i+1)
+	}
+	return make(map[string]interface{})
 }
 
 // Bool returns a bool according to a dotted path.
@@ -184,81 +254,6 @@ func Get(cfg interface{}, path string) (interface{}, error) {
 		}
 	}
 	return cfg, nil
-}
-
-// assuming number is array index not object name
-// Get returns a child of the given value according to a dotted path.
-func Set(cfg *interface{}, path string, value interface{}) (removed interface{}, modified interface{}, added interface{}, err error) {
-	parts := strings.Split(path, ".")
-	// Normalize path.
-	for k, v := range parts {
-		if v == "" {
-			if k == 0 {
-				parts = parts[1:]
-			} else {
-				return nil, nil, nil, fmt.Errorf(
-					"Index out of range at %q: list has only %v items",
-					strings.Join(parts[:k+1], "."), len(v))
-			}
-		}
-	}
-	// Get the value.
-	for pos, part := range parts {
-		if pos == len(parts)-1 {
-			// if parent is array then add item and not TODO
-			if *cfg != nil {
-				switch v := (*cfg).(type) {
-				case []interface{}:
-					if i, err := strconv.Atoi(part); err == nil {
-						if i > -1 && i < len(v) {
-							modified = cfg
-							v[i] = value
-						} else {
-							return nil, nil, nil, fmt.Errorf("unable to set array item . Item out of bound %s", path)
-						}
-					}
-				}
-
-				modified = *cfg // todo check if we
-			}
-			*cfg = value
-		} else {
-			child := parts[pos+1]
-			ancestor, err := Get(cfg, part)
-			// if the anscestor exists we need to check its type
-			// if the type is correct we continue
-			// else we add the old structure to removed and recteate as expected
-
-			if err == nil {
-				switch ancestor.(type) {
-
-				//if expecting map and map continue
-				// if expecting slice and slice continue
-				// else we
-				case map[string]interface{}, []interface{}:
-					if _, err = strconv.Atoi(child); err == nil {
-						cfg = &ancestor
-						continue
-					}
-					removed = *cfg
-				}
-
-				// parent does not exist need to be created
-				//  here we need to decide whether object or array must be created
-				if _, err = strconv.Atoi(child); err == nil {
-					ancestor = make([]interface{}, 0)
-				} else {
-					ancestor = make(map[string]interface{})
-				}
-				if added == nil {
-					added = ancestor
-				}
-				cfg = &ancestor
-			}
-
-		}
-	}
-	return cfg, removed, modified, err
 }
 
 // Parsing --------------------------------------------------------------------
