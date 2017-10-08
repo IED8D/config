@@ -52,61 +52,46 @@ func (cfg *Config) Set(path string, value interface{}) (modified map[string]inte
 		switch v := (*ref).(type) {
 		case map[string]interface{}:
 			if obj, ok := v[key]; ok {
-				switch arr:=obj.(type) {
-				case []interface{}:
-					//lets try to see if don't need to resize it
-					if i < l-1 { //alreadsy last element
-						if arrIndex, err := strconv.Atoi(keys[i+1]); err == nil {
-							if arrIndex >= len(arr) {
-								t := make([]interface{}, arrIndex+1)
-								copy(t, arr)
-								arr=t
-								obj = toInterface(arr)
-								v[key] = obj
-							}
-						}
-					}
-					// TODO how come its array but next element is not arr item
+				if i == l-1 {
+					v[key] = value
+					return
+				}else {
+					ref = &obj
+					continue
 				}
-				ref = &obj
-				continue
 			} else {
 				if i == l-1 {
 					v[key] = value
 					return
 				} else {
+					if _, err := strconv.Atoi(keys[i+1]); err == nil{
+						return nil,nil, fmt.Errorf(
+							"dynamic array elements generation is not supported. creat array and assign to %s",
+								strings.Join(keys[:i+1], "."))
+					}
 					child := makeMap(keys[i+1])
 					ref = &child
 					v[key] = child
-
 					continue
 				}
 			}
 		case []interface{}:
 			if arrIndex, err := strconv.Atoi(key); err == nil {
-				if arrIndex > -1  {
-					if arrIndex >= len(v) {
-						return nil,nil, fmt.Errorf("index out of bounds %s",strings.Join(keys[:i+1],"."))
-					}
-					if i == l-1 {
-						v[arrIndex] = value
-						return modified, added, nil
-					} else {
-						child := makeMap(keys[i+1])
-						ref = &child
-						v[arrIndex] = child
-						continue
-					}
-				} else {
-					return nil, nil, fmt.Errorf("object is array. index out of bounds %s %s", strings.Join(keys[:i+1], "."), err)
+				if arrIndex > -1 && arrIndex< len(v) {
 
+						if i == l-1 {
+							v[arrIndex] = value
+							return modified, added, nil
+						} else {
+							ref = &(v[arrIndex])
+							continue
+						}
 				}
+				return nil,nil, fmt.Errorf("index out of bounds. %s %s", strings.Join(keys[:i+1], "."), err)
 			}
 			return nil, nil, fmt.Errorf("object is array. index missmatch %s %s", strings.Join(keys[:i+1], "."), err)
-
 		}
 	}
-
 	return
 }
 
@@ -114,10 +99,9 @@ func toInterface(arr []interface{}) interface{}{
 	return arr
 }
 
+
+
 func makeMap(next string) interface{} {
-	if i, err := strconv.Atoi(next); err == nil {
-		return make([]interface{}, i+1)
-	}
 	return make(map[string]interface{})
 }
 

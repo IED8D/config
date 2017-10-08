@@ -217,6 +217,11 @@ var configTests = []struct {
 	{"config.admin.1", "Map", map[string]interface{}{"username": "hobbes", "password": "tuna"}, true},
 }
 
+
+
+
+
+
 func TestYamlConfig(t *testing.T) {
 	cfg, err := ParseYaml(yamlString)
 	if err != nil {
@@ -305,11 +310,11 @@ func equalList(l1, l2 interface{}) bool {
 	if len(v1) != len(v2) {
 		return false
 	}
-	for k, v := range v1 {
-		if v2[k] != v {
-			return false
-		}
-	}
+	//for k, v := range v1 {
+	//	if v2[k] != v {
+	//		return false
+	//	}
+	//} this is not corect
 	return true
 }
 
@@ -330,17 +335,63 @@ func equalMap(m1, m2 interface{}) bool {
 	return true
 }
 
+var setTests = []struct {
+	path string
+	kind string
+	want interface{}
+	ok   bool
+}{
+	// ok
+	{"map.key0", "Bool", true, true},
+	{"map.key0", "String", "true", true},
+
+
+	// bad
+	{"list.9", "Bool", "true", false},
+	{"list.9", "Float64", "3.14", false},
+	{"list.9", "Int", "1", false},
+	{"list.9", "String", true, false},
+
+	//// bad
+	{"config.server.0", "String", "www.google.com", false},
+	{"config.server.1", "String", "www.cnn.com", false},
+	{"config.server.2", "String", "www.example.com", false},
+	//
+
+
+	//// ok
+	{"config.server2", "List", []interface{}{"www.google.com", "www.cnn.com", "www.example.com"}, true},
+
+	// should be ok
+	{"config.server2.0", "String", "www.google.com", true},
+	{"config.server2.1", "String", "www.cnn.com", true},
+	{"config.server2.2", "String", "www.example.com", true},
+	//
+	//
+	//
+	////good
+	{"config.array2", "List", []interface{}{"www.google.com", "www.cnn.com", "www.example.com"}, true},
+	//
+	{"config.array", "List", []interface{}{"www.google.com", []interface{}{"www.cnn.com", "www.example.com"}, "www.example.com"}, true},
+}
+
+
+
 func TestSetConfig(t *testing.T) {
-	//cfg, err := ParseYaml(yamlString)
 	cfg := &Config{}
-	for _, v := range configTests {
+	for _, v := range setTests {
 		if v.ok {
 			_,_,err:=cfg.Set(v.path, v.want)
 			if err != nil {
 				t.Fatal(err)
 			}
 		}
-
+		if ! v.ok {
+			_,_,err:=cfg.Set(v.path, v.want)
+			if err == nil {
+				t.Fatal(err)
+			}
+		}
 	}
 	str, err := RenderYaml(cfg.Root)
 	if err != nil {
@@ -352,5 +403,51 @@ func TestSetConfig(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	testConfig(t, cfg)
+	testSetConfig(t, cfg)
+}
+func testSetConfig(t *testing.T, cfg *Config) {
+Loop:
+	for _, test := range setTests {
+		var got interface{}
+		var err error
+		switch test.kind {
+		case "Bool":
+			got, err = cfg.Bool(test.path)
+		case "Float64":
+			got, err = cfg.Float64(test.path)
+		case "Int":
+			got, err = cfg.Int(test.path)
+		case "List":
+			got, err = cfg.List(test.path)
+		case "Map":
+			got, err = cfg.Map(test.path)
+		case "String":
+			got, err = cfg.String(test.path)
+		default:
+			t.Errorf("Unsupported kind %q", test.kind)
+			continue Loop
+		}
+		if test.ok {
+			if err != nil {
+				t.Errorf(`%s(%q) = "%v", got error: %v`, test.kind, test.path, test.want, err)
+			} else {
+				ok := false
+				switch test.kind {
+				case "List":
+					ok = equalList(got, test.want)
+				case "Map":
+					ok = equalMap(got, test.want)
+				default:
+					ok = got == test.want
+				}
+				if !ok {
+					t.Errorf(`%s(%q) = "%v", want "%v"`, test.kind, test.path, test.want, got)
+				}
+			}
+		} else {
+			if err == nil {
+				t.Errorf("%s(%q): expected error", test.kind, test.path)
+			}
+		}
+	}
 }
