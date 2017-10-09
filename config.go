@@ -13,6 +13,7 @@ import (
 
 	goyaml "gopkg.in/yaml.v2"
 
+
 )
 
 // Config ---------------------------------------------------------------------
@@ -105,7 +106,7 @@ func (cfg *Config) Set(path string, value interface{}) (modified map[string]inte
 						} else {
 							// check next if array and needs resizing
 							child:=v[arrIndex]
-							child=resizeArray(keys[i+1],&child)
+							child=resizeArray(keys[i+1],child)
 							v[arrIndex]=child
 							ref = &(v[arrIndex])
 							continue
@@ -115,6 +116,7 @@ func (cfg *Config) Set(path string, value interface{}) (modified map[string]inte
 			}
 			return nil, nil, fmt.Errorf("object is array. index missmatch %s %s", strings.Join(keys[:i+1], "."), err)
 		}
+
 	}
 	return
 }
@@ -130,6 +132,9 @@ func toInterface( arr []interface{}) interface{}{
 
 func resizeArray(key string,obj interface{}) interface{} {
 	if index, err := strconv.Atoi(key); err == nil {
+		if obj == nil {
+			return make([]interface{},index+1,index+1)
+		}
 		switch arr := (obj).(type) {
 		case []interface{}:
 			if len(arr) <= index {

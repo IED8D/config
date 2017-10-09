@@ -313,7 +313,7 @@ func equalList(l1, l2 interface{}) bool {
 	//	if v2[k] != v {
 	//		return false
 	//	}
-	//} this is not corect
+	//} //this is not corect
 	return true
 }
 
@@ -362,9 +362,9 @@ var setTests = []struct {
 	{"config.server2", "List", []interface{}{"www.google.com", "www.cnn.com", "www.example.com"}, true},
 
 	// should be ok
-	{"config.server2.0", "String", "www.google.com", true},
-	{"config.server2.1", "String", "www.cnn.com", true},
-	{"config.server2.2", "String", "www.example.com", true},
+	{"config.test.0.0", "String", "www.google.com", true},
+	{"config.test.0.1", "String", "www.cnn.com", true},
+	{"config.test.0.2", "String", "www.example.com", true},
 	//
 	//
 	//
