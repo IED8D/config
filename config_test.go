@@ -7,7 +7,6 @@ package config
 import (
 
 	"testing"
-	"fmt"
 )
 
 var yamlString = `
@@ -347,10 +346,10 @@ var setTests = []struct {
 
 
 	// bad
-	{"list.9", "Bool", "true", true},
-	{"list.9", "Float64", "3.14", true},
-	{"list.9", "Int", "1", true},
-	{"list.9", "String", true, true},
+	{"list.1", "Bool", true, true},
+	{"list.2", "Float64", 3.14, true},
+	{"list.3", "Int", 1, true},
+	{"list.4", "String", "true", true},
 
 	//// bad
 	{"config.server.0", "String", "www.google.com", true},
@@ -418,7 +417,7 @@ func TestSetConfig(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Printf("%s",str)
+
 
 	cfg, err = ParseYaml(str)
 	if err != nil {
@@ -426,7 +425,11 @@ func TestSetConfig(t *testing.T) {
 	}
 	testSetConfig(t, cfg)
 
+	cfg.Set("list.2",true)
 
+	if v,err:=cfg.Bool("list.2"); v!=true || err !=nil{
+		t.Errorf("list.10 should be bool")
+	}
 
 }
 func testSetConfig(t *testing.T, cfg *Config) {
