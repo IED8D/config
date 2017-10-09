@@ -347,15 +347,15 @@ var setTests = []struct {
 
 
 	// bad
-	{"list.9", "Bool", "true", false},
-	{"list.9", "Float64", "3.14", false},
-	{"list.9", "Int", "1", false},
-	{"list.9", "String", true, false},
+	{"list.9", "Bool", "true", true},
+	{"list.9", "Float64", "3.14", true},
+	{"list.9", "Int", "1", true},
+	{"list.9", "String", true, true},
 
 	//// bad
-	{"config.server.0", "String", "www.google.com", false},
-	{"config.server.1", "String", "www.cnn.com", false},
-	{"config.server.2", "String", "www.example.com", false},
+	{"config.server.0", "String", "www.google.com", true},
+	{"config.server.1", "String", "www.cnn.com", true},
+	{"config.server.2", "String", "www.example.com", true},
 	//
 
 

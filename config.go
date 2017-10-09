@@ -50,7 +50,7 @@ func (cfg *Config) Set(path string, value interface{}) (modified map[string]inte
 
 	switch cfg.Root.(type){
 
-	case map[string]interface{}: // this is ok
+	case map[string]interface{}, []interface{}: // this is ok // but we need
 	default:
 		// not ok
 		modified[""]=cfg.Root
@@ -71,6 +71,9 @@ func (cfg *Config) Set(path string, value interface{}) (modified map[string]inte
 					v[key] = value
 					return
 				}else {
+					// check if next is array and resize if needed
+					obj=resizeArray(keys[i+1],obj)
+					v[key]=obj
 					ref = &obj
 					continue
 				}
@@ -80,12 +83,13 @@ func (cfg *Config) Set(path string, value interface{}) (modified map[string]inte
 					v[key] = value
 					return
 				} else {
-					if _, err := strconv.Atoi(keys[i+1]); err == nil{
-						return nil,nil, fmt.Errorf(
-							"dynamic array elements generation is not supported. creat array and assign to %s",
-								strings.Join(keys[:i+1], "."))
+					var child interface{}
+					if arrIndex, err := strconv.Atoi(keys[i+1]); err == nil{
+						child= makeArray(arrIndex+1)
+
+					}else {
+						child = makeMap()
 					}
-					child := makeMap()
 					ref = &child
 					v[key] = child
 					continue
@@ -99,6 +103,10 @@ func (cfg *Config) Set(path string, value interface{}) (modified map[string]inte
 							v[arrIndex] = value
 							return  modified, added, nil
 						} else {
+							// check next if array and needs resizing
+							child:=v[arrIndex]
+							child=resizeArray(keys[i+1],&child)
+							v[arrIndex]=child
 							ref = &(v[arrIndex])
 							continue
 						}
@@ -111,11 +119,33 @@ func (cfg *Config) Set(path string, value interface{}) (modified map[string]inte
 	return
 }
 
-func toInterface(arr []interface{}) interface{}{
+func makeArray(len int) interface{}{
+	slice :=make([]interface{},len)
+	return slice
+}
+
+func toInterface( arr []interface{}) interface{}{
 	return arr
 }
 
+func resizeArray(key string,obj interface{}) interface{} {
+	if index, err := strconv.Atoi(key); err == nil {
+		switch arr := (obj).(type) {
+		case []interface{}:
+			if len(arr) <= index {
+				t:= make([]interface{},index+1,index+1)
+				for i:=0;i<len(t);i++{
+					t[i]=nil
+				}
+				copy(t,arr)
+				arr=t
+				obj=toInterface(arr)
+			}
+		}
+	}
 
+	return obj
+}
 
 func makeMap() interface{} {
 	return make(map[string]interface{})
@@ -320,7 +350,7 @@ func normalizeValue(value interface{}) (interface{}, error) {
 			node[key] = item
 		}
 		return node, nil
-	case bool, float64, int, string:
+	case bool, float64, int, string,nil:
 		return value, nil
 	}
 	return nil, fmt.Errorf("Unsupported type: %T", value)
