@@ -66,7 +66,7 @@ func (cfg *Config) Set(path string, value interface{}) (modified map[string]inte
 		case map[string]interface{}:
 			if obj, ok := v[key]; ok {
 				if i == l-1 {
-					modified[strings.Join(keys[:i], ".")] = obj
+					modified[strings.Join(keys[:i+1], ".")] = obj
 					v[key] = value
 					return modified, added, nil
 				}
@@ -79,7 +79,7 @@ func (cfg *Config) Set(path string, value interface{}) (modified map[string]inte
 
 			} else {
 				if i == l-1 {
-					added[strings.Join(keys[:i], ".")] = v[key]
+					added[strings.Join(keys[:i+1], ".")] = v[key]
 					v[key] = value
 					return modified, added, nil
 				}
@@ -100,7 +100,7 @@ func (cfg *Config) Set(path string, value interface{}) (modified map[string]inte
 			if arrIndex, err := strconv.Atoi(key); err == nil {
 				if arrIndex > -1 && arrIndex < len(v) {
 					if i == l-1 {
-						modified[strings.Join(keys[:i], ".")] = v[arrIndex]
+						modified[strings.Join(keys[:i+1], ".")] = v[arrIndex]
 						v[arrIndex] = value
 						return modified, added, nil
 					}
