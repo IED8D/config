@@ -12,8 +12,6 @@ import (
 	"strings"
 
 	goyaml "gopkg.in/yaml.v2"
-
-
 )
 
 // Config ---------------------------------------------------------------------
@@ -35,8 +33,8 @@ func (cfg *Config) Get(path string) (*Config, error) {
 // Set the value in the structure according to a dotted path.
 // objects that do not exists will be created
 func (cfg *Config) Set(path string, value interface{}) (modified map[string]interface{}, added map[string]interface{}, err error) {
-	path= strings.Trim(path,".")
-	path= strings.Trim(path," ")
+	path = strings.Trim(path, ".")
+	path = strings.Trim(path, " ")
 
 	modified = make(map[string]interface{})
 	added = make(map[string]interface{})
@@ -45,16 +43,16 @@ func (cfg *Config) Set(path string, value interface{}) (modified map[string]inte
 	}
 	if path == "" {
 		cfg.Root = value
-		added[""]=value
+		added[""] = value
 		return
 	}
 
-	switch cfg.Root.(type){
+	switch cfg.Root.(type) {
 
 	case map[string]interface{}, []interface{}: // this is ok // but we need
 	default:
 		// not ok
-		modified[""]=cfg.Root
+		modified[""] = cfg.Root
 		cfg.Root = make(map[string]interface{})
 	}
 
@@ -68,83 +66,86 @@ func (cfg *Config) Set(path string, value interface{}) (modified map[string]inte
 		case map[string]interface{}:
 			if obj, ok := v[key]; ok {
 				if i == l-1 {
-					modified[strings.Join(keys[:i], ".")]=obj
+					modified[strings.Join(keys[:i], ".")] = obj
 					v[key] = value
-					return
-				}else {
-					// check if next is array and resize if needed
-					obj=resizeArray(keys[i+1],obj)
-					v[key]=obj
-					ref = &obj
-					continue
+					return modified, added, nil
 				}
+
+				// check if next is array and resize if needed
+				obj = resizeArray(keys[i+1], obj)
+				v[key] = obj
+				ref = &obj
+				continue
+
 			} else {
 				if i == l-1 {
-					added[strings.Join(keys[:i], ".")]=obj
+					added[strings.Join(keys[:i], ".")] = v[key]
 					v[key] = value
-					return
-				} else {
-					var child interface{}
-					if arrIndex, err := strconv.Atoi(keys[i+1]); err == nil{
-						child= makeArray(arrIndex+1)
-
-					}else {
-						child = makeMap()
-					}
-					ref = &child
-					v[key] = child
-					continue
+					return modified, added, nil
 				}
+
+				var child interface{}
+				if arrIndex, err := strconv.Atoi(keys[i+1]); err == nil {
+					child = makeArray(arrIndex + 1)
+
+				} else {
+					child = makeMap()
+				}
+				ref = &child
+				v[key] = child
+				continue
+
 			}
 		case []interface{}:
 			if arrIndex, err := strconv.Atoi(key); err == nil {
-				if arrIndex > -1 && arrIndex< len(v) {
-						if i == l-1 {
-							modified[strings.Join(keys[:i], ".")]=v[arrIndex]
-							v[arrIndex] = value
-							return  modified, added, nil
-						} else {
-							// check next if array and needs resizing
-							child:=v[arrIndex]
-							child=resizeArray(keys[i+1],child)
-							v[arrIndex]=child
-							ref = &(v[arrIndex])
-							continue
-						}
+				if arrIndex > -1 && arrIndex < len(v) {
+					if i == l-1 {
+						modified[strings.Join(keys[:i], ".")] = v[arrIndex]
+						v[arrIndex] = value
+						return modified, added, nil
+					}
+
+					// check next if array and needs resizing
+					child := v[arrIndex]
+					child = resizeArray(keys[i+1], child)
+					v[arrIndex] = child
+					ref = &(v[arrIndex])
+					continue
+
 				}
-				return nil,nil, fmt.Errorf("index out of bounds. %s %s", strings.Join(keys[:i+1], "."), err)
+				return nil, nil, fmt.Errorf("index out of bounds. %s %s", strings.Join(keys[:i+1], "."), err)
 			}
 			return nil, nil, fmt.Errorf("object is array. index missmatch %s %s", strings.Join(keys[:i+1], "."), err)
 		}
 
 	}
-	return
+	return modified, added, nil
 }
 
-func makeArray(len int) interface{}{
-	slice :=make([]interface{},len)
+func makeArray(len int) interface{} {
+	slice := make([]interface{}, len)
 	return slice
 }
 
-func toInterface( arr []interface{}) interface{}{
+func toInterface(arr []interface{}) interface{} {
 	return arr
 }
 
-func resizeArray(key string,obj interface{}) interface{} {
+func resizeArray(key string, obj interface{}) interface{} {
 	if index, err := strconv.Atoi(key); err == nil {
 		if obj == nil {
-			return make([]interface{},index+1,index+1)
+			return make([]interface{}, index+1, index+1)
 		}
 		switch arr := (obj).(type) {
 		case []interface{}:
 			if len(arr) <= index {
-				t:= make([]interface{},index+1,index+1)
-				for i:=0;i<len(t);i++{
-					t[i]=nil
+				t := make([]interface{}, index+1, index+1)
+				for i := 0; i < len(t); i++ {
+					t[i] = nil
 				}
-				copy(t,arr)
-				arr=t
-				obj=toInterface(arr)
+				copy(t, arr)
+				arr = t
+				obj = toInterface(arr)
 			}
 		}
 	}
@@ -355,7 +356,7 @@ func normalizeValue(value interface{}) (interface{}, error) {
 			node[key] = item
 		}
 		return node, nil
-	case bool, float64, int, string,nil:
+	case bool, float64, int, string, nil:
 		return value, nil
 	}
 	return nil, fmt.Errorf("Unsupported type: %T", value)

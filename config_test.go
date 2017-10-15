@@ -344,7 +344,7 @@ var setTests = []struct {
 	{"map.key0", "Bool", true, true},
 	{"map.key0", "String", "true", true},
 
-
+	{"map.key3x.key", "String", "true", true},
 	// bad
 	{"list.1", "Bool", true, true},
 	{"list.2", "Float64", 3.14, true},
