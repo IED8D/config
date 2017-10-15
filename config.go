@@ -79,7 +79,7 @@ func (cfg *Config) Set(path string, value interface{}) (modified map[string]inte
 
 			} else {
 				if i == l-1 {
-					added[strings.Join(keys[:i+1], ".")] = v[key]
+					added[strings.Join(keys[:i+1], ".")] = value
 					v[key] = value
 					return modified, added, nil
 				}
