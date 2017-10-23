@@ -103,7 +103,10 @@ func (cfg *Config) Set(path string, value interface{}) (modified map[string]inte
 			if arrIndex, err := strconv.Atoi(key); err == nil {
 				if arrIndex > -1 && arrIndex < len(v) {
 					if i == l-1 {
-						if !reflect.DeepEqual(v[arrIndex], value) {
+						if v[arrIndex] == nil {
+							added[strings.Join(keys[:i+1], ".")] = v[arrIndex]
+							v[arrIndex] = value
+						} else if !reflect.DeepEqual(v[arrIndex], value) {
 							modified[strings.Join(keys[:i+1], ".")] = v[arrIndex]
 							v[arrIndex] = value
 						}
